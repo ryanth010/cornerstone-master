@@ -1,0 +1,157 @@
+---
+category:
+    shop_by_price: true
+    products:
+        limit: {{theme_settings.categorypage_products_per_page}}
+---
+{{inject "categoryProductsPerPage" theme_settings.categorypage_products_per_page}}
+{{#partial "head"}}
+    {{#if pagination.category.previous}}
+        <link rel="prev" href="{{pagination.category.previous}}">
+    {{/if}}
+    {{#if pagination.category.next}}
+        <link rel="next" href="{{pagination.category.next}}">
+    {{/if}}
+{{/partial}}
+
+{{#partial "page"}}
+
+{{> components/common/breadcrumbs breadcrumbs=breadcrumbs}}
+{{#if category.image}}
+    {{> components/common/responsive-img
+        image=category.image
+        fallback_size=theme_settings.zoom_size
+        lazyload=theme_settings.lazyload_mode
+        class="category-header-image"
+    }}
+{{/if}}
+{{#unless theme_settings.hide_category_page_heading }}
+    <h1 class="page-heading">{{category.name}}</h1>
+    {{{region name="category_below_header"}}}
+{{/unless}}
+{{{category.description}}}
+<div class="page">
+    {{#if category.faceted_search_enabled}}
+        <aside class="page-sidebar" id="faceted-search-container">
+            {{> components/category/sidebar}}
+        </aside>
+    {{else if category.subcategories}}
+        <aside class="page-sidebar" id="faceted-search-container">
+            {{> components/category/sidebar}}
+        </aside>
+    {{else if category.shop_by_price}}
+        {{#if theme_settings.shop_by_price_visibility}}
+             <aside class="page-sidebar" id="faceted-search-container">
+                {{> components/category/sidebar}}
+            </aside>
+        {{/if}}
+    {{/if}}
+
+    <button id="addToCartButton" class="button button--small figcaption-button">Add All to Cart</button>
+    <button id="deleteCartButton" class="button button--small figcaption-button" style="display: none;">Remove All Items</button>
+
+  <script>
+        // Define the createCart function
+        function createCart(route, cartItems) {
+        }
+
+        // Reference to the "Add to Cart" button
+        const addToCartButton = document.getElementById("addToCartButton");
+
+        // Attach a click event listener to the button
+        addToCartButton.addEventListener("click", function() {
+        // Call the createCart function with the correct route and cartItems
+        const route = '/api/storefront/carts'; 
+        const cartItems = {
+            "lineItems": [
+                {
+                "quantity": 1,
+                "productId": 114
+                }
+            ]
+        };
+        
+        // Call the createCart function
+        createCart(route, cartItems);
+        deleteCartButton.style.display = "inline-block";
+        });
+  </script>
+   
+   
+   <script>
+    // Get a reference to the "Delete Cart" button
+    const deleteCartButton = document.getElementById("deleteCartButton");
+    
+    // Attach a click event listener to the button
+    deleteCartButton.addEventListener("click", function() {
+      // Fetch cart information
+      const options = { method: 'GET', headers: { 'Content-Type': 'application/json' } };
+    
+      fetch('/api/storefront/carts', options)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Request failed');
+          }
+          return response.json();
+        })
+        .then(responseData => {
+          console.log("Response data:", responseData);
+    
+          if (Array.isArray(responseData) && responseData.length > 0) {
+            
+            const cartId = responseData[0].id;
+            const routeStart = '/api/storefront/carts/';
+    
+            // Call the deleteCart function with the retrieved cart ID
+            deleteCart(routeStart, cartId);
+          } else {
+            console.log("No cart data available.");
+          }
+        })
+        .catch(err => {
+          console.error("Error fetching cart information:", err);
+          // Handle the error scenario, such as displaying an error message to the user
+        })
+        .finally(() => {
+        alert("All items removed from the cart");
+        location.reload(); // Refresh the page
+        });
+    });
+    </script>
+
+<script>
+    
+    // Fetch cart information
+    const options = { method: 'GET', headers: { 'Content-Type': 'application/json' } };
+
+    fetch('/api/storefront/carts', options)
+        .then(response => response.json())
+        .then(responseData => {
+            console.log("Response data:", responseData);
+
+            // Check if there are items in the cart
+            if (Array.isArray(responseData) && responseData.length > 0) {
+                // Show the "Delete Cart" button
+                deleteCartButton.style.display = "inline-block";
+            } else {
+                console.log("No cart data available.");
+            }
+        })
+        .catch(err => {
+            console.error("Error fetching cart information:", err);
+            // Handle the error scenario, such as displaying an error message to the user
+        });
+
+    // Attach a click event listener to the "Delete Cart" button
+    deleteCartButton.addEventListener("click", function() {
+        // ... Your deleteCartButton event handler code ...
+    });
+</script>
+        {{> components/category/product-listing}}
+        {{{region name="category_below_content"}}}
+    </div>
+</div>
+
+{{/partial}}
+{{> layout/base}}
+
